@@ -12,6 +12,10 @@ UPLOAD_FOLDER = "uploads"
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+@app.route("/")
+def home():
+    return "FridgeChef AI Backend is running!"
+
 @app.route('/detect', methods=['POST'])
 def detect():
 
