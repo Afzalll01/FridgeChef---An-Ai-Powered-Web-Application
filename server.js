@@ -157,6 +157,16 @@ app.get('/api/user/:id', (req, res) => {
         });
     });
 });
+app.get("/api/test", (req, res) => {
+    db.get("SELECT COUNT(*) AS count FROM users", (err, row) => {
+        if (err) {
+            return res.status(500).json({
+                error: err.message
+            });
+        }
+        res.json(row);
+    });
+});
 
 // Start server
 app.listen(PORT, () => {
