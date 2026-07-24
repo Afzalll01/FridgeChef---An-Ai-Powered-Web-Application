@@ -9,9 +9,6 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.get("/", (req, res) => {
-    res.send("THIS IS THE NEW SERVER");
-});
 
 app.use(express.static(__dirname));
 
