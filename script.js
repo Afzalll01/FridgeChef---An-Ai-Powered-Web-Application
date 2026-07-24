@@ -1,7 +1,7 @@
 
 let ingredients = []
 let recipeData  = []  
-const API_URL   = 'http://localhost:3000/api'
+const API_URL = 'https://fridgechef-xhge.onrender.com/api';
 
 // DOM refs
 const uploadInput  = document.getElementById('imageUpload')
@@ -611,7 +611,7 @@ async function detectFromImage() {
 
     formData.append('image', file)
 
-    const res = await fetch('http://127.0.0.1:5000/detect', {
+    const res = await fetch('https://fridgechef-ai-29mq.onrender.com/detect', {
       method: 'POST',
       body: formData
     })
