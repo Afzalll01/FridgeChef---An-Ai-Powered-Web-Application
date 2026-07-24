@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile – FridgeChef</title>
+  <meta name="description" content="View your FridgeChef profile, saved favorite recipes, and search history.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Profile Page Specific Styles ── */
+    .profile-page-wrapper {
+      min-height: 100vh;
+      padding-bottom: 4rem;
+    }
+
+    /* ── Hero Band ── */
+    .profile-hero {
+      background: linear-gradient(135deg, var(--primary-color) 0%, #059669 60%, #047857 100%);
+      padding: 3.5rem 2rem 5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 240px; height: 240px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+    }
+    .profile-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -40px;
+      width: 320px; height: 320px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 50%;
+    }
+
+    .avatar-ring {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      border: 4px solid rgba(255,255,255,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      margin: 0 auto 1.5rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      animation: avatarPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes avatarPop {
+      from { transform: scale(0.4); opacity: 0; }
+      to   { transform: scale(1);   opacity: 1; }
+    }
+
+    .profile-hero h1 {
+      color: #fff;
+      font-size: 2rem;
+      font-weight: 800;
+      margin: 0 0 0.4rem;
+      background: none;
+      -webkit-text-fill-color: white;
+    }
+
+    .profile-hero .email-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 0.35rem 1.1rem;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      backdrop-filter: blur(6px);
+      margin-top: 0.5rem;
+    }
+
+    .member-since {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.8rem;
+      margin-top: 0.6rem;
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 1rem;
+      padding: 0.75rem 1.6rem;
+      text-align: center;
+      color: #fff;
+      min-width: 110px;
+      animation: slideUp 0.4s ease-out both;
+    }
+
+    .stat-pill:nth-child(2) { animation-delay: 0.1s; }
+    .stat-pill:nth-child(3) { animation-delay: 0.2s; }
+
+    .stat-pill .stat-num {
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .stat-pill .stat-label {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      margin-top: 0.25rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── Content Grid ── */
+    .profile-content-area {
+      max-width: 960px;
+      margin: -2.5rem auto 0;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* ── Section Cards ── */
+    .section-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 1.5rem;
+      padding: 2rem 2.5rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-glass);
+      animation: slideUp 0.45s ease-out both;
+    }
+
+    .section-card:nth-child(1) { animation-delay: 0.05s; }
+    .section-card:nth-child(2) { animation-delay: 0.15s; }
+    .section-card:nth-child(3) { animation-delay: 0.25s; }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .section-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--secondary-color);
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0;
+      color: var(--text-main);
+    }
+
+    .badge-count {
+      background: var(--primary-color);
+      color: white;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.65rem;
+      min-width: 22px;
+      text-align: center;
+    }
+
+    /* ── Info Rows ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+    }
+
+    .info-item {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.2rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: var(--transition);
+    }
+
+    .info-item:hover {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--secondary-color);
+    }
+
+    .info-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .info-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .info-value {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* ── Favorites List ── */
+    .fav-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.2rem;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .fav-card {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1.2rem;
+      overflow: hidden;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .fav-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary-color);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .fav-card img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .fav-card:hover img {
+      transform: scale(1.06);
+    }
+
+    .fav-card-body {
+      padding: 0.9rem 1rem;
+    }
+
+    .fav-card-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin: 0 0 0.5rem;
+      line-height: 1.4;
+    }
+
+    .fav-remove-btn {
+      margin-top: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: none;
+    }
+
+    .fav-remove-btn:hover {
+      background: #dc2626;
+      color: white;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* ── History List ── */
+    .history-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 0.9rem 1.3rem;
+      transition: var(--transition);
+      animation: slideUp 0.3s ease-out both;
+    }
+
+    .history-item:hover {
+      border-color: var(--primary-color);
+      background: var(--secondary-color);
+    }
+
+    .history-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      opacity: 0.6;
+    }
+
+    .history-term {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      flex: 1;
+    }
+
+    .history-date {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ── Empty States ── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    /* ── Action Buttons Row ── */
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-back {
+      background: var(--input-bg);
+      color: var(--text-main);
+      border: 2px solid var(--border-color);
+      box-shadow: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-back:hover {
+      background: var(--secondary-color);
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+      transform: translateY(-2px);
+    }
+
+    .btn-logout {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 2px solid transparent;
+      box-shadow: none;
+    }
+
+    .btn-logout:hover {
+      background: #dc2626;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    /* ── Skeleton loader ── */
+    .skeleton-line {
+      height: 1rem;
+      background: linear-gradient(90deg, var(--border-color) 25%, var(--input-bg) 50%, var(--border-color) 75%);
+      background-size: 200% 100%;
+      border-radius: 9999px;
+      animation: shimmer 1.4s infinite;
+      margin: 0.5rem 0;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .section-card { padding: 1.5rem; }
+      .profile-hero h1 { font-size: 1.6rem; }
+      .stats-bar { gap: 1rem; }
+    }
+
+    /* Not-logged-in page */
+    .not-logged-in {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      text-align: center;
+      padding: 2rem;
+      gap: 1.5rem;
+    }
+
+    .not-logged-in .big-icon {
+      font-size: 5rem;
+      animation: avatarPop 0.5s ease both;
+    }
+
+    .not-logged-in h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .not-logged-in p {
+      color: var(--text-muted);
+      max-width: 320px;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">🥬 FridgeChef</div>
+  <ul class="nav-links">
+    <li onclick="window.location.href='index.html'">🏠 Home</li>
+    <li onclick="toggleDark()">🌙 Dark Mode</li>
+  </ul>
+</nav>
+
+<!-- MAIN WRAPPER -->
+<div class="profile-page-wrapper" id="pageContent">
+  <!-- JS will render either profile or login prompt here -->
+  <div class="not-logged-in">
+    <div class="big-icon">⏳</div>
+    <h2>Loading your profile…</h2>
+  </div>
+</div>
+
+<!-- RECIPE DETAIL MODAL -->
+<div id="recipeModal" class="modal">
+  <div class="modal-content recipe-modal-content">
+    <span class="close-btn" onclick="closeRecipe()">✕</span>
+    <img id="recipeImage" alt="Recipe image">
+    <div class="recipe-modal-body">
+      <h2 id="recipeTitle"></h2>
+      <h3>🥗 Ingredients</h3>
+      <ul id="recipeIngredients" class="recipe-ing-list"></ul>
+      <h3>📋 Instructions</h3>
+      <p id="recipeInstructions"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const API_URL = 'http://localhost:3000/api';
+
+  /* ── Dark Mode ── */
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  }
+
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+  }
+
+  /* ── Recipe Modal ── */
+  async function openRecipe(id) {
+    if (!id) return;
+    const modal = document.getElementById('recipeModal');
+    modal.style.display = 'flex';
+    document.getElementById('recipeTitle').innerText = 'Loading…';
+    document.getElementById('recipeImage').src = '';
+    document.getElementById('recipeIngredients').innerHTML = '';
+    document.getElementById('recipeInstructions').innerHTML = '';
+
+    try {
+      const res = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=f27dfecc2f80481bb246959ef390881b`);
+      const data = await res.json();
+      document.getElementById('recipeTitle').innerText = data.title;
+      document.getElementById('recipeImage').src = data.image;
+      const list = document.getElementById('recipeIngredients');
+      (data.extendedIngredients || []).forEach(i => {
+        list.innerHTML += `<li>${i.original}</li>`;
+      });
+      document.getElementById('recipeInstructions').innerHTML = data.instructions || 'No instructions available';
+    } catch (e) {
+      document.getElementById('recipeTitle').innerText = 'Failed to load recipe';
+    }
+  }
+
+  function closeRecipe() {
+    document.getElementById('recipeModal').style.display = 'none';
+  }
+
+  /* ── Remove Favorite ── */
+  async function removeFavorite(favId, userId) {
+    if (!confirm('Remove this recipe from favorites?')) return;
+    try {
+      await fetch(`${API_URL}/favorites/${favId}?user_id=${userId}`, { method: 'DELETE' });
+      loadProfile(); // refresh
+    } catch (e) { console.error(e); }
+  }
+
+  /* ── Logout ── */
+  function logout() {
+    localStorage.removeItem('user');
+    window.location.href = 'index.html';
+  }
+
+  /* ── Format date ── */
+  function fmtDate(str) {
+    try {
+      return new Date(str).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch { return str; }
+  }
+
+  /* ── Main Profile Loader ── */
+  async function loadProfile() {
+    const userStr = localStorage.getItem('user');
+    const page = document.getElementById('pageContent');
+
+    if (!userStr) {
+      page.innerHTML = `
+        <div class="not-logged-in">
+          <div class="big-icon">🔒</div>
+          <h2>You're not logged in</h2>
+          <p>Sign in from the home page to view your profile, favorites, and search history.</p>
+          <a href="index.html" class="btn-back" style="
+            display:inline-flex;align-items:center;gap:.5rem;padding:.9rem 2rem;
+            border-radius:9999px;font-weight:600;font-size:1rem;font-family:inherit;
+            background:var(--primary-color);color:white;border:none;cursor:pointer;
+            text-decoration:none;box-shadow:0 4px 12px rgba(16,185,129,.35);
+          ">🏠 Go to Home &amp; Login</a>
+        </div>`;
+      return;
+    }
+
+    const user = JSON.parse(userStr);
+
+    // Show skeleton while loading
+    page.innerHTML = `
+      <div class="profile-hero">
+        <div class="avatar-ring">👤</div>
+        <h1 id="heroName"></h1>
+        <div class="email-badge" id="heroBadge"></div>
+        <p class="member-since" id="heroSince"></p>
+        <div class="stats-bar">
+          <div class="stat-pill"><div class="stat-num" id="statFav">–</div><div class="stat-label">Favorites</div></div>
+          <div class="stat-pill"><div class="stat-num" id="statHist">–</div><div class="stat-label">Searches</div></div>
+        </div>
+      </div>
+      <div class="profile-content-area">
+        <!-- Account Info -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-header-left">
+              <div class="section-icon">👤</div>
+              <h2>Account Info</h2>
+            </div>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-icon">🧑</div>
+              <div>
+                <div class="info-label">Username</div>
+                <div class="info-value" id="infoName">…</div>
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="info-icon">📧</div>
+              <div>
+                <div class="info-label">Email</div>
+                <div class="info-value" id="infoEmail">…</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Favorites -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-header-left">
+              <div class="section-icon">⭐</div>
+              <h2>Favorite Recipes</h2>
+            </div>
+            <span class="badge-count" id="favCount">0</span>
+          </div>
+          <div id="favoritesArea">
+            <div class="skeleton-line" style="width:60%"></div>
+            <div class="skeleton-line" style="width:40%"></div>
+          </div>
+        </div>
+
+        <!-- History -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-header-left">
+              <div class="section-icon">🔍</div>
+              <h2>Search History</h2>
+            </div>
+            <span class="badge-count" id="histCount">0</span>
+          </div>
+          <div id="historyArea">
+            <div class="skeleton-line" style="width:70%"></div>
+            <div class="skeleton-line" style="width:50%"></div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="section-card" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+          <span style="color:var(--text-muted); font-size:.9rem;">Signed in as <strong>${user.name}</strong></span>
+          <div class="profile-actions">
+            <a href="index.html" class="btn-back" style="
+              display:inline-flex;align-items:center;gap:.4rem;
+              padding:.8rem 1.8rem;border-radius:9999px;font-size:.95rem;
+              font-weight:600;font-family:inherit;cursor:pointer;
+              background:var(--input-bg);color:var(--text-main);
+              border:2px solid var(--border-color);text-decoration:none;
+              transition:all .3s ease;
+            ">← Back to Home</a>
+            <button class="btn-logout" onclick="logout()" style="padding:.8rem 1.8rem;">🚪 Logout</button>
+          </div>
+        </div>
+      </div>`;
+
+    // Set name immediately from local storage
+    document.getElementById('heroName').innerText = user.name;
+    document.getElementById('infoName').innerText = user.name;
+
+    // Fetch full profile data from API
+    try {
+      const res = await fetch(`${API_URL}/user/${user.id}`);
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+
+      // Email
+      const email = data.email || user.email || '—';
+      document.getElementById('heroBadge').innerHTML = `📧 ${email}`;
+      document.getElementById('infoEmail').innerText = email;
+
+      // Stats
+      document.getElementById('statFav').innerText = data.favorites.length;
+      document.getElementById('statHist').innerText = data.history.length;
+      document.getElementById('favCount').innerText = data.favorites.length;
+      document.getElementById('histCount').innerText = data.history.length;
+
+      // ─ Favorites ─
+      const favArea = document.getElementById('favoritesArea');
+      if (data.favorites.length === 0) {
+        favArea.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">⭐</div>
+            <p>No favorite recipes yet — go search and save some!</p>
+          </div>`;
+      } else {
+        const ul = document.createElement('ul');
+        ul.className = 'fav-list';
+        data.favorites.forEach(f => {
+          const li = document.createElement('li');
+          li.className = 'fav-card';
+          li.innerHTML = `
+            ${f.image_url ? `<img src="${f.image_url}" alt="${f.recipe_name}" loading="lazy">` : ''}
+            <div class="fav-card-body">
+              <p class="fav-card-title">${f.recipe_name}</p>
+              <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+                ${f.recipe_id ? `<button onclick="event.stopPropagation();openRecipe(${f.recipe_id})" style="padding:.35rem .9rem;font-size:.78rem;margin-top:.25rem;border-radius:9999px;background:var(--secondary-color);color:var(--primary-hover);border:1px solid var(--border-color);box-shadow:none;">👁 View</button>` : ''}
+                <button class="fav-remove-btn" onclick="event.stopPropagation();removeFavorite(${f.id}, ${user.id})">✕ Remove</button>
+              </div>
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:.4rem;">${fmtDate(f.created_at)}</div>
+            </div>`;
+          if (f.recipe_id) li.onclick = () => openRecipe(f.recipe_id);
+          ul.appendChild(li);
+        });
+        favArea.innerHTML = '';
+        favArea.appendChild(ul);
+      }
+
+      // ─ History ─
+      const histArea = document.getElementById('historyArea');
+      if (data.history.length === 0) {
+        histArea.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>No searches yet — try finding some recipes!</p>
+          </div>`;
+      } else {
+        const ul = document.createElement('ul');
+        ul.className = 'history-list';
+        data.history.forEach((h, i) => {
+          const li = document.createElement('li');
+          li.className = 'history-item';
+          li.style.animationDelay = `${i * 0.05}s`;
+          li.innerHTML = `
+            <span class="history-icon">🔍</span>
+            <span class="history-term">${h.search_term}</span>
+            <span class="history-date">${fmtDate(h.created_at)}</span>`;
+          ul.appendChild(li);
+        });
+        histArea.innerHTML = '';
+        histArea.appendChild(ul);
+      }
+
+    } catch (e) {
+      console.error('Profile load error:', e);
+      document.getElementById('favoritesArea').innerHTML = '<p style="color:var(--text-muted)">Could not load data. Is the server running?</p>';
+      document.getElementById('historyArea').innerHTML = '';
+    }
+  }
+
+  // Boot
+  loadProfile();
+</script>
+</body>
+</html>

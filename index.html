@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FridgeChef – Find amazing recipes using ingredients you already have in your fridge. Powered by AI.">
+<title>FridgeChef – Cook Smarter</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+
+</head>
+
+<body>
+
+<!-- ====== NAVBAR ====== -->
+<nav class="navbar">
+  <div class="logo">🥬 FridgeChef</div>
+  <ul class="nav-links">
+    <li onclick="goToProfile()" id="navProfile">
+      <span class="nav-icon">👤</span> Profile
+    </li>
+    <li onclick="toggleDark()" id="navDark">
+      <span class="nav-icon">🌙</span> Dark Mode
+    </li>
+    <li onclick="showFavorites()">
+      <span class="nav-icon">⭐</span> Favorites
+    </li>
+    <li onclick="showHistory()">
+      <span class="nav-icon">🕒</span> History
+    </li>
+  </ul>
+</nav>
+
+<!-- ====== HERO HEADER ====== -->
+<header class="hero">
+  <div class="hero-badge">✨ AI-Powered Recipe Discovery</div>
+  <h1>Cook With What's<br><span class="hero-highlight">In Your Fridge</span></h1>
+  <p class="hero-sub">Add ingredients, scan your fridge, and discover delicious recipes in seconds.</p>
+  <div class="hero-stats">
+    <div class="hero-stat"><span class="hero-stat-num">1M+</span><span>Recipes</span></div>
+    <div class="hero-stat-divider"></div>
+    <div class="hero-stat"><span class="hero-stat-num">AI</span><span>Powered</span></div>
+    <div class="hero-stat-divider"></div>
+    <div class="hero-stat"><span class="hero-stat-num">Free</span><span>Always</span></div>
+  </div>
+</header>
+
+<!-- ====== MAIN CONTAINER ====== -->
+<div class="container">
+
+  <!-- ===== SEARCH SECTION ===== -->
+  <section class="card-section search-hero-section" id="searchSection">
+    <div class="search-section-header">
+      <div class="search-section-icon">🛒</div>
+      <div>
+        <h2>What's in your fridge?</h2>
+        <p class="section-subtitle">Add ingredients and we'll find the perfect recipes for you</p>
+      </div>
+    </div>
+
+    <!-- Big Search Bar -->
+    <div class="big-search-wrap">
+      <div class="big-search-box" id="bigSearchBox">
+        <span class="big-search-icon">🔍</span>
+        <input id="ingredientInput" class="big-search-input" placeholder="Type an ingredient e.g. chicken, tomato…" autocomplete="off">
+        <button class="big-add-btn" onclick="addIngredient()" id="addIngredientBtn">
+          <span>+ Add</span>
+        </button>
+      </div>
+      <div id="autocomplete" class="autocomplete-dropdown"></div>
+    </div>
+
+    <!-- Quick suggestions -->
+    <div class="quick-suggestions">
+      <span class="qs-label">Try:</span>
+      <button class="qs-chip" onclick="quickAdd('egg')">🥚 Egg</button>
+      <button class="qs-chip" onclick="quickAdd('chicken')">🍗 Chicken</button>
+      <button class="qs-chip" onclick="quickAdd('pasta')">🍝 Pasta</button>
+      <button class="qs-chip" onclick="quickAdd('tomato')">🍅 Tomato</button>
+      <button class="qs-chip" onclick="quickAdd('cheese')">🧀 Cheese</button>
+      <button class="qs-chip" onclick="quickAdd('garlic')">🧄 Garlic</button>
+    </div>
+
+    <!-- Selected Ingredient Tags -->
+    <div id="selectedIngredients" class="ingredients-tags"></div>
+
+    <!-- Find Recipes CTA -->
+    <div class="find-recipes-wrap" id="findRecipesWrap" style="display:none;">
+      <button class="find-recipes-btn" onclick="findRecipes()" id="findRecipesBtn">
+        <span class="find-icon">🍽️</span>
+        <span id="findBtnText">Find Recipes</span>
+        <span class="find-arrow">→</span>
+      </button>
+      <button class="clear-all-btn" onclick="clearAllIngredients()">✕ Clear all</button>
+    </div>
+  </section>
+
+
+  <!-- ===== AI SCAN SECTION ===== -->
+  <section class="card-section ai-upgrade-section">
+    <div class="ai-section-inner">
+      <div class="ai-left">
+        <div class="ai-badge">🤖 AI Scanner</div>
+        <h2>Scan Your Fridge</h2>
+        <p class="section-subtitle">Upload a photo and our AI will automatically detect all the ingredients in it.</p>
+        <div class="ai-steps">
+          <div class="ai-step"><span class="ai-step-num">1</span> Upload a photo of your fridge</div>
+          <div class="ai-step"><span class="ai-step-num">2</span> AI detects ingredients instantly</div>
+          <div class="ai-step"><span class="ai-step-num">3</span> Find matching recipes</div>
+        </div>
+        <button class="ai-detect-btn" onclick="detectFromImage()" id="detectBtn">
+          <span>🔍 Detect Ingredients</span>
+        </button>
+      </div>
+      <div class="ai-right">
+        <label class="ai-upload-zone" for="imageUpload" id="uploadZone">
+          <div class="upload-icon-wrap">
+            <span class="upload-icon">📸</span>
+          </div>
+          <p class="upload-text">Drop your fridge photo here</p>
+          <p class="upload-hint">or click to browse</p>
+          <input type="file" id="imageUpload" accept="image/*" style="display:none;">
+        </label>
+        <div class="ai-preview-wrap" id="aiPreviewWrap" style="display:none;">
+          <img id="previewImage" class="ai-preview-img" alt="Fridge preview">
+          <button class="ai-retake-btn" onclick="retakePhoto()">↩ Retake</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ===== RECIPES SECTION ===== -->
+  <section class="card-section recipes-section" id="recipesSection" style="display:none;">
+    <div class="recipes-section-header">
+      <div>
+        <h2>🍽️ Recipes For You</h2>
+        <p class="section-subtitle" id="recipeSubtitle">Based on your ingredients</p>
+      </div>
+      <div class="recipe-sort-wrap">
+        <span class="sort-label">Sort:</span>
+        <select class="sort-select" id="sortSelect" onchange="sortRecipes()">
+          <option value="default">Best Match</option>
+          <option value="alpha">A → Z</option>
+          <option value="used">Most Used</option>
+        </select>
+      </div>
+    </div>
+    <div id="recipes" class="recipes-grid"></div>
+  </section>
+
+</div><!-- /container -->
+
+
+<!-- ====== AUTH MODAL - PREMIUM ====== -->
+<div id="authModal" class="modal auth-modal-overlay">
+  <div class="auth-card">
+    <div class="auth-brand-panel">
+      <div class="auth-brand-content">
+        <div class="auth-logo">🥬</div>
+        <h2 class="auth-brand-title">FridgeChef</h2>
+        <p class="auth-brand-tagline">Turn your fridge into a 5&#8209;star kitchen.</p>
+        <div class="auth-features">
+          <div class="auth-feature-item"><span class="auth-feat-icon">🍽️</span><span>Smart recipe suggestions</span></div>
+          <div class="auth-feature-item"><span class="auth-feat-icon">📸</span><span>AI ingredient scanner</span></div>
+          <div class="auth-feature-item"><span class="auth-feat-icon">⭐</span><span>Save your favorites</span></div>
+          <div class="auth-feature-item"><span class="auth-feat-icon">📜</span><span>Search history</span></div>
+        </div>
+      </div>
+      <div class="auth-brand-bg-circles">
+        <div class="auth-circle auth-circle-1"></div>
+        <div class="auth-circle auth-circle-2"></div>
+        <div class="auth-circle auth-circle-3"></div>
+      </div>
+    </div>
+    <div class="auth-form-panel">
+      <button class="auth-close" onclick="closeAuth()" aria-label="Close">✕</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="loginTab" onclick="switchToLogin()">Login</button>
+        <button class="auth-tab" id="signupTab" onclick="switchToSignup()">Sign Up</button>
+        <div class="auth-tab-indicator" id="authTabIndicator"></div>
+      </div>
+      <div class="auth-form-body">
+        <div class="auth-greeting">
+          <h3 id="authFormTitle">Welcome back!</h3>
+          <p id="authFormSubtitle">Login to your FridgeChef account</p>
+        </div>
+        <div class="auth-field">
+          <span class="auth-field-icon">👤</span>
+          <input id="username" class="auth-input" type="text" placeholder=" " autocomplete="username">
+          <label class="auth-label" for="username">Username</label>
+        </div>
+        <div class="auth-field" id="emailField" style="display:none;">
+          <span class="auth-field-icon">✉️</span>
+          <input id="emailInput" class="auth-input" type="email" placeholder=" " autocomplete="email">
+          <label class="auth-label" for="emailInput">Email (optional)</label>
+        </div>
+        <div class="auth-field">
+          <span class="auth-field-icon">🔒</span>
+          <input id="password" class="auth-input" type="password" placeholder=" " autocomplete="current-password">
+          <label class="auth-label" for="password">Password</label>
+          <button type="button" class="auth-eye-btn" onclick="togglePasswordVisibility()" aria-label="Toggle password">
+            <span id="authEyeIcon">👁️</span>
+          </button>
+        </div>
+        <div class="auth-msg" id="authMsg" style="display:none;"></div>
+        <button class="auth-submit-btn" id="authSubmitBtn" onclick="login()">
+          <span id="authBtnText">Login</span>
+          <span class="auth-btn-arrow">→</span>
+        </button>
+        <div class="auth-divider"><span>or continue as guest</span></div>
+        <p class="auth-toggle-link">
+          <span id="toggleTextMsg">Don't have an account?</span>
+          <a id="toggleText" onclick="toggleAuth()" href="#">Sign Up</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ====== PROFILE MODAL ====== -->
+<div id="profileModal" class="modal">
+  <div class="modal-content profile-content">
+    <span class="close-btn" onclick="closeProfile()">✕</span>
+    <h2 id="profileName"></h2>
+    <div class="profile-dashboard">
+      <div class="dashboard-section">
+        <h3>🔍 Recent Searches</h3>
+        <ul id="profileHistoryList" class="dashboard-list"></ul>
+      </div>
+      <div class="dashboard-section">
+        <h3>⭐ Favorite Recipes</h3>
+        <ul id="profileFavoritesList" class="dashboard-list"></ul>
+      </div>
+    </div>
+    <button onclick="logout()" class="logout-btn">Logout</button>
+  </div>
+</div>
+
+
+<!-- ====== RECIPE MODAL ====== -->
+<div id="recipeModal" class="modal">
+  <div class="modal-content recipe-modal-content">
+    <span class="close-btn" onclick="closeRecipe()">✕</span>
+    <img id="recipeImage" alt="Recipe image">
+    <div class="recipe-modal-body">
+      <h2 id="recipeTitle"></h2>
+      <h3>🥗 Ingredients</h3>
+      <ul id="recipeIngredients" class="recipe-ing-list"></ul>
+      <h3>📋 Instructions</h3>
+      <p id="recipeInstructions"></p>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
