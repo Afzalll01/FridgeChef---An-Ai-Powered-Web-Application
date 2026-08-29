@@ -210,7 +210,11 @@ python backend/tests/test_backend.py
 3. In `frontend/js/config.js`, update `DEFAULT_PROD_API` to point to your Render backend URL (e.g., `https://your-backend.onrender.com/api`).
 4. Click **Deploy**.
 
+
 ---
+## 🚀 Live Demo
+
+👉 [Try FridgeChef Live](https://fridgechef-theta.vercel.app/)
 
 ## 👨‍💻 Author
 **Afzal Nizami**
