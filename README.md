@@ -197,7 +197,7 @@ python backend/tests/test_backend.py
    - **Root Directory**: `backend`
    - **Environment**: `Python`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn app:app`
+   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120`
 4. Add Environment Variables:
    - `DATABASE_URL`: Your PostgreSQL connection string
    - `SECRET_KEY`: A secure random string

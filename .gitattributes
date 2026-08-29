@@ -1,0 +1,18 @@
+# Ensure binary files are not corrupted by line ending normalization on Windows
+*.pt binary
+*.ptc binary
+*.ptl binary
+*.pth binary
+*.zip binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.sqlite binary
+*.sqlite3 binary
+*.db binary
+*.docx binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

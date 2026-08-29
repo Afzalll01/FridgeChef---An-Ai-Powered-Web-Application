@@ -13,7 +13,14 @@ else:
 
 class Config:
     """Base application configuration."""
-    SECRET_KEY = os.getenv("SECRET_KEY", "fridgechef-super-secret-production-key-2026")
+    
+    # Enforce SECRET_KEY in production, default in local development
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    if not SECRET_KEY:
+        if os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t"):
+            SECRET_KEY = "dev-secret-key-change-in-production"
+        else:
+            raise RuntimeError("SECRET_KEY must be set in production environment settings.")
 
     # Database configuration
     # Supports PostgreSQL (Render) and falls back to SQLite for local development
@@ -24,14 +31,17 @@ class Config:
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = database_url
     else:
-        # Default SQLite path
-        db_path = backend_dir / "database.sqlite"
-        SQLALCHEMY_DATABASE_URI = f"sqlite:///{db_path.as_posix()}"
+        # Require DATABASE_URL in production, fall back to SQLite in development
+        if os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t"):
+            db_path = backend_dir / "database.sqlite"
+            SQLALCHEMY_DATABASE_URI = f"sqlite:///{db_path.as_posix()}"
+        else:
+            raise RuntimeError("DATABASE_URL must be set in production environment settings.")
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # External APIs
-    SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY", "f27dfecc2f80481bb246959ef390881b")
+    # External APIs (Removed hardcoded fallback keys)
+    SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
     # YOLO AI Model path
@@ -44,7 +54,7 @@ class Config:
     UPLOAD_FOLDER = str(backend_dir / "uploads")
 
     # CORS configuration
-    # Set FRONTEND_URL in Render env to your Vercel deployment URL (e.g. https://fridge-chef.vercel.app)
+    # Set FRONTEND_URL in Render env to your Vercel deployment URL (e.g. https://fridgechef-theta.vercel.app)
     FRONTEND_URL = os.getenv("FRONTEND_URL", "")
     ALLOWED_ORIGINS = [
         "http://localhost:3000",
@@ -67,3 +77,4 @@ class Config:
     # Server settings
     PORT = int(os.getenv("PORT", 5000))
     DEBUG = os.getenv("FLASK_DEBUG", "False").lower() in ("true", "1", "t")
+

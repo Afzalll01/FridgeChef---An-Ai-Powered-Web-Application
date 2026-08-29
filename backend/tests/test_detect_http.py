@@ -7,10 +7,10 @@ def test_detect():
     test_png = Path(__file__).resolve().parent.parent.parent / "test.png"
     print(f"Test image path: {test_png}")
     print(f"Exists: {test_png.exists()}")
-    
+
     url = "http://localhost:5000/api/detect"
     print(f"Sending POST to {url}...")
-    
+
     with open(test_png, "rb") as f:
         files = {"image": ("test.png", f, "image/png")}
         try:

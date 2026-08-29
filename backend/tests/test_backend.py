@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from unittest.mock import patch, MagicMock
 from pathlib import Path
 
 # Add backend directory to sys.path
@@ -25,7 +26,7 @@ class BackendTestCase(unittest.TestCase):
             ALLOWED_ORIGINS = ["*"]
             UPLOAD_FOLDER = str(backend_dir / "uploads")
             MODEL_PATH = str(backend_dir / "models_ai" / "fridge_yolov8.pt")
-            SPOONACULAR_API_KEY = "f27dfecc2f80481bb246959ef390881b"
+            SPOONACULAR_API_KEY = os.getenv("SPOONACULAR_API_KEY", "mock_spoonacular_key_for_testing")
             PORT = 5000
             DEBUG = False
 
@@ -193,12 +194,41 @@ class BackendTestCase(unittest.TestCase):
             )
             self.assertEqual(res_bc.status_code, 200)
 
-    def test_recipe_routes(self):
+    @patch("services.recipe_service.requests.get")
+    def test_recipe_routes(self, mock_get):
         """Test recipe search and details route endpoints."""
+        # Mock Spoonacular ingredients search response
+        mock_search_response = MagicMock()
+        mock_search_response.status_code = 200
+        mock_search_response.json.return_value = [
+            {"id": 1, "title": "Chicken Soup", "image": "http://img.png", "usedIngredientCount": 2}
+        ]
+        
+        # Mock Spoonacular recipe information response
+        mock_details_response = MagicMock()
+        mock_details_response.status_code = 200
+        mock_details_response.json.return_value = {
+            "id": 1, "title": "Chicken Soup", "image": "http://img.png", "extendedIngredients": [], "instructions": "Cook it."
+        }
+        
+        # Side effect to return search or details based on URL
+        def get_side_effect(url, params=None, timeout=None):
+            if "information" in url:
+                return mock_details_response
+            return mock_search_response
+            
+        mock_get.side_effect = get_side_effect
+
         search_res = self.client.get("/api/recipes/search?ingredients=chicken,tomato&number=3")
         self.assertEqual(search_res.status_code, 200)
         search_data = search_res.get_json()
         self.assertIsInstance(search_data, list)
+        self.assertEqual(len(search_data), 1)
+        
+        details_res = self.client.get("/api/recipes/1")
+        self.assertEqual(details_res.status_code, 200)
+        details_data = details_res.get_json()
+        self.assertEqual(details_data["title"], "Chicken Soup")
 
 
 if __name__ == "__main__":
