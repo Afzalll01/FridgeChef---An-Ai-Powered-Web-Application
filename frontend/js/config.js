@@ -16,7 +16,8 @@
   // In development: http://localhost:5000/api
   // In production: Configure with your Render backend URL e.g. 'https://fridgechef-backend.onrender.com/api'
   const DEFAULT_DEV_API = 'http://localhost:5000/api';
-  const DEFAULT_PROD_API = 'https://fridgechef-backend.onrender.com/api';
+  const DEFAULT_PROD_API =
+    "https://fridgechef-an-ai-powered-web-application.onrender.com/api";
 
   // Allow custom override via localStorage if needed
   const overrideApi = localStorage.getItem('FRIDGECHEF_API_URL');
