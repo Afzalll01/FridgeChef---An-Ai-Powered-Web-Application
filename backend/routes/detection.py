@@ -9,6 +9,28 @@ logger = logging.getLogger(__name__)
 detection_bp = Blueprint("detection", __name__)
 
 
+@detection_bp.route("/api/detect/health", methods=["GET"])
+@detection_bp.route("/detect/health", methods=["GET"])
+def detect_health():
+    """Diagnostic check to confirm that the YOLO model can load without running inference."""
+    logger.info("YOLO Model Health Check request received.")
+    try:
+        model = DetectionService.get_model()
+        return jsonify({
+            "status": "ok",
+            "model_loaded": True,
+            "classes_count": len(model.names)
+        }), 200
+    except Exception as e:
+        import traceback
+        tb_str = traceback.format_exc()
+        logger.error(f"YOLO Model Load Health Check Failed:\nType: {type(e).__name__}\nMessage: {str(e)}\nTraceback:\n{tb_str}")
+        return jsonify({
+            "status": "error",
+            "error": "Failed to load model on startup"
+        }), 500
+
+
 @detection_bp.route("/api/detect", methods=["POST"])
 @detection_bp.route("/detect", methods=["POST"])
 def detect():
@@ -46,4 +68,3 @@ def detect():
         tb_str = traceback.format_exc()
         logger.error(f"Detection Route Exception Details:\nType: {type(e).__name__}\nMessage: {str(e)}\nTraceback:\n{tb_str}")
         return jsonify({"error": "Unable to process image"}), 500
-

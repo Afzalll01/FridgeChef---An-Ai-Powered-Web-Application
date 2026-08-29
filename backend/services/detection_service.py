@@ -10,6 +10,10 @@ from config import Config
 
 logger = logging.getLogger(__name__)
 
+# Clamp PyTorch CPU threading to 1 to prevent thread context-switching overhead on Render
+torch.set_num_threads(1)
+logger.info(f"PyTorch CPU threads locked to: {torch.get_num_threads()}")
+
 
 class DetectionService:
     _model = None
@@ -28,9 +32,9 @@ class DetectionService:
                 raise FileNotFoundError(f"YOLO model file not found at: {model_path}")
 
             logger.info(f"YOLO Initialization - Loading weights from: '{model_path}'")
-            load_start = time.time()
+            load_start = time.perf_counter()
             cls._model = YOLO(model_path)
-            load_duration = time.time() - load_start
+            load_duration = time.perf_counter() - load_start
             logger.info(f"YOLO Initialization Complete - Loaded weights in {load_duration:.4f}s. Class names: {cls._model.names}")
         
         return cls._model
@@ -43,7 +47,6 @@ class DetectionService:
         Returns a list of unique detected ingredient names.
         """
         logger.info("Entering detect_ingredients service method.")
-        start_time = time.time()
         
         # Load the cached model
         model = cls.get_model()
@@ -79,16 +82,19 @@ class DetectionService:
             temp_file_size = os.path.getsize(temp_file_path) if temp_file_exists else 0
             logger.info(f"Optimized temporary image saved: '{temp_file_path}' (Size: {temp_file_size} bytes)")
 
-            # Run inference under inference_mode
+            # Run inference under inference_mode (imgsz=320, CPU only, timed)
             logger.info("Initiating YOLO inference run on CPU...")
-            inference_start = time.time()
-            
+            start = time.perf_counter()
             with torch.inference_mode():
-                # Restrict to CPU explicitly, set standard image size to 640
-                results = model(temp_file_path, conf=conf_threshold, device='cpu', imgsz=640)
-            
-            inference_duration = time.time() - inference_start
-            logger.info(f"YOLO inference run completed in {inference_duration:.4f} seconds.")
+                results = model(
+                    temp_file_path,
+                    conf=conf_threshold,
+                    device="cpu",
+                    imgsz=320,
+                    verbose=False
+                )
+            elapsed = time.perf_counter() - start
+            logger.info("YOLO CPU inference completed in %.2fs", elapsed)
 
             detected = []
             box_count = 0
@@ -101,8 +107,6 @@ class DetectionService:
                     if clean_label and clean_label not in detected:
                         detected.append(clean_label)
 
-            total_duration = time.time() - start_time
-            logger.info(f"Detection Success - Total request time: {total_duration:.4f}s. Frames: {len(results)}, Boxes: {box_count}, Detected ingredients: {detected}")
             return detected
 
         except Exception as e:
