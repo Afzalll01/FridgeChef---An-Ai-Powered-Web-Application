@@ -1,24 +1,38 @@
-# Dataset
-FridgeFoodDetection.v1i.yolov8/
-FridgeFoodDetection.v1i.yolov8.zip
+# Environment variables & secrets
+.env
+.env.*
+backend/.env
+backend/.env.*
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 venv/
-
-# Node
-node_modules/
-
-# Runtime
-uploads/
-runs/
-
-# Local files
+.venv/
+env/
+*.sqlite
+*.db
+backend/database.sqlite
 database.sqlite
+
+# AI & Training
+runs/
+uploads/
+backend/uploads/
+FridgeFoodDetection.v1i.yolov8/
+FridgeFoodDetection.v1i.yolov8.zip
+yolov8n.pt
+
+# Project Local / Drafts
 test.png
 test.py
 train.py
-yolov8n.pt
 ppt_structure.json
 FridgeChef_Research_Paper_Final.docx
+
+# Node & IDE
+node_modules/
+.DS_Store
+.vscode/
+.idea/

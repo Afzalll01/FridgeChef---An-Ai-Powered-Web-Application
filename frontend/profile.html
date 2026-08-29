@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
   <style>
     /* ── Profile Page Specific Styles ── */
     .profile-page-wrapper {
@@ -504,8 +504,9 @@
   </div>
 </div>
 
+<script src="js/config.js"></script>
 <script>
-  const API_URL = 'http://localhost:3000/api';
+  const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://localhost:5000/api';
 
   /* ── Dark Mode ── */
   function toggleDark() {
@@ -528,13 +529,16 @@
     document.getElementById('recipeInstructions').innerHTML = '';
 
     try {
-      const res = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=f27dfecc2f80481bb246959ef390881b`);
+      const res = await fetch(`${API_URL}/recipes/${id}`);
       const data = await res.json();
-      document.getElementById('recipeTitle').innerText = data.title;
-      document.getElementById('recipeImage').src = data.image;
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch recipe details');
+      }
+      document.getElementById('recipeTitle').innerText = data.title || 'Recipe Details';
+      document.getElementById('recipeImage').src = data.image || '';
       const list = document.getElementById('recipeIngredients');
       (data.extendedIngredients || []).forEach(i => {
-        list.innerHTML += `<li>${i.original}</li>`;
+        list.innerHTML += `<li>${i.original || i.name}</li>`;
       });
       document.getElementById('recipeInstructions').innerHTML = data.instructions || 'No instructions available';
     } catch (e) {
@@ -693,14 +697,14 @@
       document.getElementById('infoEmail').innerText = email;
 
       // Stats
-      document.getElementById('statFav').innerText = data.favorites.length;
-      document.getElementById('statHist').innerText = data.history.length;
-      document.getElementById('favCount').innerText = data.favorites.length;
-      document.getElementById('histCount').innerText = data.history.length;
+      document.getElementById('statFav').innerText = (data.favorites || []).length;
+      document.getElementById('statHist').innerText = (data.history || []).length;
+      document.getElementById('favCount').innerText = (data.favorites || []).length;
+      document.getElementById('histCount').innerText = (data.history || []).length;
 
       // ─ Favorites ─
       const favArea = document.getElementById('favoritesArea');
-      if (data.favorites.length === 0) {
+      if (!data.favorites || data.favorites.length === 0) {
         favArea.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">⭐</div>
@@ -731,7 +735,7 @@
 
       // ─ History ─
       const histArea = document.getElementById('historyArea');
-      if (data.history.length === 0) {
+      if (!data.history || data.history.length === 0) {
         histArea.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">🔍</div>

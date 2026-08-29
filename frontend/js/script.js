@@ -1,7 +1,8 @@
-
 let ingredients = []
 let recipeData  = []  
-const API_URL = 'https://fridgechef-xhge.onrender.com/api';
+
+// Dynamic backend API base URL from config.js
+const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) || 'http://localhost:5000/api';
 
 // DOM refs
 const uploadInput  = document.getElementById('imageUpload')
@@ -11,12 +12,12 @@ const auto         = document.getElementById('autocomplete')
 
 let model
 
-
-
 async function loadAI() {
   try {
-    model = await cocoSsd.load()
-    console.log('AI detection model loaded ✓')
+    if (typeof cocoSsd !== 'undefined') {
+      model = await cocoSsd.load()
+      console.log('AI detection model loaded ✓')
+    }
   } catch(e) {
     console.warn('AI model failed to load', e)
   }
@@ -227,15 +228,18 @@ async function findRecipes() {
   if (btnText) btnText.innerText = 'Searching…'
   showSkeletons(6)
 
-  const ingredientString = ingredients.join(',')
-  const url = `https://api.spoonacular.com/recipes/findByIngredients?ingredients=${ingredientString}&number=9&apiKey=f27dfecc2f80481bb246959ef390881b`
+  const ingredientString = encodeURIComponent(ingredients.join(','))
+  const url = `${API_URL}/recipes/search?ingredients=${ingredientString}&number=9`
 
   try {
     const res  = await fetch(url)
     const data = await res.json()
-    recipeData = data  // store for sorting
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to search recipes')
+    }
+    recipeData = Array.isArray(data) ? data : []  // store for sorting
 
-    renderRecipes(data)
+    renderRecipes(recipeData)
 
     // Save history if logged in
     const userStr = localStorage.getItem('user')
@@ -290,11 +294,11 @@ function renderRecipes(data) {
 
     card.innerHTML = `
       <div class="recipe-card-img-wrap">
-        <img src="${recipe.image}" alt="${recipe.title}" loading="lazy">
+        <img src="${recipe.image || ''}" alt="${recipe.title || 'Recipe'}" loading="lazy">
         <span class="recipe-card-badge">🍴 Recipe</span>
       </div>
       <div class="recipe-card-content">
-        <h3>${recipe.title}</h3>
+        <h3>${recipe.title || 'Recipe'}</h3>
         <div class="recipe-card-meta">
           <span class="recipe-meta-pill">✅ ${used} used</span>
           ${missing > 0 ? `<span class="recipe-meta-pill recipe-missing-pill">➕ ${missing} missing</span>` : ''}
@@ -303,7 +307,7 @@ function renderRecipes(data) {
           <button class="recipe-view-btn" onclick="event.stopPropagation(); openRecipe(${recipe.id})">
             View Recipe →
           </button>
-          <button class="recipe-save-btn" onclick="event.stopPropagation(); saveFavorite('${escapedTitle}', ${recipe.id}, '${recipe.image}')" title="Save to favorites">
+          <button class="recipe-save-btn" onclick="event.stopPropagation(); saveFavorite('${escapedTitle}', ${recipe.id}, '${recipe.image || ''}')" title="Save to favorites">
             ⭐
           </button>
         </div>
@@ -322,9 +326,9 @@ function sortRecipes() {
   let sorted = [...recipeData]
 
   if (val === 'alpha') {
-    sorted.sort((a, b) => a.title.localeCompare(b.title))
+    sorted.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
   } else if (val === 'used') {
-    sorted.sort((a, b) => b.usedIngredientCount - a.usedIngredientCount)
+    sorted.sort((a, b) => (b.usedIngredientCount || 0) - (a.usedIngredientCount || 0))
   }
   renderRecipes(sorted)
 }
@@ -501,7 +505,7 @@ async function showProfile() {
 
     const hList = document.getElementById('profileHistoryList')
     hList.innerHTML = ''
-    if (!data.history.length) {
+    if (!data.history || !data.history.length) {
       hList.innerHTML = '<li>No recent searches</li>'
     } else {
       data.history.forEach(h => {
@@ -511,7 +515,7 @@ async function showProfile() {
 
     const fList = document.getElementById('profileFavoritesList')
     fList.innerHTML = ''
-    if (!data.favorites.length) {
+    if (!data.favorites || !data.favorites.length) {
       fList.innerHTML = '<li>No favorite recipes yet</li>'
     } else {
       data.favorites.forEach(f => {
@@ -553,6 +557,7 @@ function logout() {
 
 
 async function openRecipe(id) {
+  if (!id) return
   const modal = document.getElementById('recipeModal')
   modal.style.display = 'flex'
 
@@ -563,16 +568,19 @@ async function openRecipe(id) {
   document.getElementById('recipeInstructions').innerHTML = ''
 
   try {
-    const res  = await fetch(`https://api.spoonacular.com/recipes/${id}/information?apiKey=f27dfecc2f80481bb246959ef390881b`)
+    const res  = await fetch(`${API_URL}/recipes/${id}`)
     const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Failed to fetch recipe details')
+    }
 
-    document.getElementById('recipeTitle').innerText = data.title
-    document.getElementById('recipeImage').src       = data.image
+    document.getElementById('recipeTitle').innerText = data.title || 'Recipe Details'
+    document.getElementById('recipeImage').src       = data.image || ''
 
     const ingList = document.getElementById('recipeIngredients')
     ingList.innerHTML = ''
     ;(data.extendedIngredients || []).forEach(i => {
-      ingList.innerHTML += `<li>${i.original}</li>`
+      ingList.innerHTML += `<li>${i.original || i.name}</li>`
     })
 
     document.getElementById('recipeInstructions').innerHTML =
@@ -590,13 +598,10 @@ function closeRecipe() {
 
 
 async function detectFromImage() {
-
   const btn = document.getElementById('detectBtn')
-
   if (!btn) return
 
   const file = uploadInput.files[0]
-
   if (!file) {
     alert('Upload a fridge image first!')
     return
@@ -606,57 +611,47 @@ async function detectFromImage() {
   btn.disabled = true
 
   try {
-
     const formData = new FormData()
-
     formData.append('image', file)
 
-    const res = await fetch('https://fridgechef-ai-29mq.onrender.com/detect', {
+    const res = await fetch(`${API_URL}/detect`, {
       method: 'POST',
       body: formData
     })
 
     const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.error || 'Fridge detection failed')
+    }
 
     if (!data.ingredients || data.ingredients.length === 0) {
-
       btn.innerHTML = '<span>🤔 No ingredients detected</span>'
-
       setTimeout(() => {
         btn.innerHTML = '<span>🔍 Detect Ingredients</span>'
         btn.disabled = false
       }, 2500)
-
       return
     }
 
     data.ingredients.forEach(item => {
-
       const label = item.toLowerCase().trim()
-
       if (!ingredients.includes(label)) {
         ingredients.push(label)
       }
-
     })
 
     displayIngredients()
-
     updateFindBtn()
 
     btn.innerHTML = `<span>✅ ${data.ingredients.length} ingredients detected!</span>`
-
     setTimeout(() => {
       btn.innerHTML = '<span>🔍 Detect Ingredients</span>'
       btn.disabled = false
     }, 2500)
 
   } catch (err) {
-
     console.error(err)
-
     btn.innerHTML = '<span>⚠️ Detection failed</span>'
-
     setTimeout(() => {
       btn.innerHTML = '<span>🔍 Detect Ingredients</span>'
       btn.disabled = false
